@@ -77,6 +77,7 @@ function GoogleCallback() {
 
 function App() {
   const [user, setUser] = useState(null)
+  const [protectedData, setProtectedData] = useState(null)
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'))
@@ -84,6 +85,29 @@ function App() {
       setUser(user)
     }
   }, [])
+
+  
+  const testProtectedRoute = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'))
+      if (!user || !user.jwt_token) {
+        alert('Please login first')
+        return
+      }
+
+      const response = await axios.get('http://localhost:5000/auth/me', {
+        headers: {
+          Authorization: `Bearer ${user.jwt_token}`
+        }
+      })
+
+      setProtectedData(response.data.user_id)
+    } catch (error) {
+      console.error('Protected route error:', error)
+      alert('Failed to access protected route')
+    }
+  }
+
 
   return (
     <Router>
@@ -108,10 +132,27 @@ function App() {
                   <h2>{user.user_name}</h2>
                   <p>{user.user_email}</p>
                   <p>{user.jwt_token}</p>
+                  {
+                    protectedData === null &&
+                    <button
+                    onClick={testProtectedRoute}
+                    className='protected-route-button'
+                    >
+                    Test Protected Route
+                  </button>
+                  }
+                  {protectedData && (
+                    <div className='protected-data'>
+                      <h3>Protected Data:</h3>
+                      <p>User ID: {protectedData}</p>
+                    </div>
+                  )}
+                  <br />
                   <button
                     onClick={() => {
                       localStorage.removeItem('user')
                       setUser(null)
+                      setProtectedData(null)
                       window.location.href = '/'
                     }}
                     className='logout-button'
