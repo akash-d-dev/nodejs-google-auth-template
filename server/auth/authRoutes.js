@@ -2,65 +2,70 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
-const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
+require('dotenv').config();
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
-router.post('/auth/google', async (req, res) => {
+router.post('/google', async (req, res) => {
   try {
-    const { code } = req.body;
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Missing or invalid Authorization header' });
+    }
 
-    // Exchange code for tokens
-    const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', {
+    const code = authHeader.split(' ')[1];
+
+
+    console.log('Google auth code:', code);
+
+    const tokenRequestData = {
       code,
       client_id: process.env.GOOGLE_CLIENT_ID,
       client_secret: process.env.GOOGLE_CLIENT_SECRET,
       redirect_uri: process.env.GOOGLE_REDIRECT_URI,
       grant_type: 'authorization_code',
-    });
+    };
 
-    const { id_token , access_token} = tokenResponse.data;
+    // Exchange code for tokens
+    const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', tokenRequestData);
+    const { id_token } = tokenResponse.data;
 
-    // Decode the id_token (JWT from Google)
-    const ticket = await client.verifyIdToken({
-      idToken: id_token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
+    console.log('Google token response:', tokenResponse.data);
 
-    const payload = ticket.getPayload();
-    const { sub: googleId, email, name, picture } = payload;
+    // Decode id_token 
+    const decoded = jwt.decode(id_token, { complete: true });
+
+    console.log('Decoded JWT:', decoded);
+
+    const { sub: userId, email: user_email, name: user_name, picture: user_image } = decoded.payload;
+
+    console.log(userId, user_email, user_name, user_image);
 
     // Check if user exists
-    let user = await User.findOne({ googleId });
+    let user = await User.findOne({ userId });
 
     if (!user) {
-      user = new User({ googleId, email, name, picture });
+      user = new User({ userId, email: user_email });
       await user.save();
     }
 
     // Create our own JWT token
-    const token = jwt.sign(
-      {
-        userId: user._id,
-        email: user.email,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' } // Same as 10080 mins
-    );
+    const jwtPayload = {
+      user_id: userId,
+      user_email,
+      exp: Math.floor(Date.now() / 1000) + 60 * 500, // 500 minutes
+    };
 
-    res.json({
-      token,
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        picture: user.picture,
-      },
+    const jwt_token = jwt.sign(jwtPayload, process.env.JWT_SECRET);
+
+    return res.status(200).json({
+      jwt_token,
+      user_name,
+      user_email,
+      user_image,
     });
-  } catch (error) {
-    console.error('Google auth error:', error.message);
-    res.status(401).json({ error: 'Authorization failed' });
+  } catch (err) {
+    console.error('Google auth error:', err.message);
+    return res.status(401).json({ error: 'Authorization failed' });
   }
 });
 

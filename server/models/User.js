@@ -6,17 +6,15 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  googleId: {
+  userId: {
     type: String,
     required: true,
     unique: true
   },
-  name: String,
-  picture: String,
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
 
-module.exports = mongoose.model('User', userSchema); 
+module.exports = mongoose.model('Users', userSchema); 

@@ -2,12 +2,16 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const morgan = require('morgan');
+const helmet = require('helmet');
 const authRoutes = require('./auth/authRoutes');
 
 const app = express();
 
 // Middleware
 app.use(cors());
+app.use(helmet());
+app.use(morgan('dev'));
 app.use(express.json());
 
 // Connect to MongoDB
