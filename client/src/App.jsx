@@ -131,7 +131,7 @@ function App() {
                   />
                   <h2>{user.user_name}</h2>
                   <p>{user.user_email}</p>
-                  <p>{user.jwt_token}</p>
+                  <p>Jwt Token: {user.jwt_token}</p>
                   {
                     protectedData === null &&
                     <button
