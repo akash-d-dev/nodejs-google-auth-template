@@ -13,7 +13,7 @@ function GoogleLoginButton() {
   const handleGoogleLogin = useGoogleLogin({
     flow: 'auth-code',
     ux_mode: 'redirect',
-    redirect_uri: `http://localhost:5173/auth/google`
+    redirect_uri: `${import.meta.env.VITE_APP_URL}/auth/google`
   })
 
   return (
@@ -37,7 +37,7 @@ function GoogleCallback() {
       console.log('Google login code:', code)
       try {
         const response = await axios.post(
-          'http://localhost:5000/auth/google',
+          `${import.meta.env.VITE_APP_API_URL}/auth/google`,
           null,
           {
             headers: {
@@ -95,7 +95,7 @@ function App() {
         return
       }
 
-      const response = await axios.get('http://localhost:5000/auth/me', {
+      const response = await axios.get(`${import.meta.env.VITE_APP_API_URL}/auth/google`, {
         headers: {
           Authorization: `Bearer ${user.jwt_token}`
         }
