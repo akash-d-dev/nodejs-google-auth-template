@@ -95,7 +95,7 @@ function App() {
         return
       }
 
-      const response = await axios.get(`${import.meta.env.VITE_APP_API_URL}/auth/google`, {
+      const response = await axios.get(`${import.meta.env.VITE_APP_API_URL}/auth/me`, {
         headers: {
           Authorization: `Bearer ${user.jwt_token}`
         }
