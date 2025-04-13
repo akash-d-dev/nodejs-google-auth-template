@@ -6,6 +6,8 @@
 
 **⭐ Please leave a star if you find it useful!**
 
+⚠️Hosted on a free platform, so the server may experience cold starts.
+
 ---
 
 ## 🔐 Authentication Flow
